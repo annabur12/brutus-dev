@@ -39,8 +39,10 @@ If you find case (b), do NOT put a blended range in dosage_gl. Instead:
  - list each distinct wine in "versions" with its own name, dosage and source
  - set dosage_gl to the figure of the single best-matching wine if the query clearly
    identifies one, otherwise null
- - in "note", state plainly at the very start that several distinct wines exist under this
-   name and that the user should specify which one (e.g. by lieu-dit or bottling).
+ - keep "note" SHORT in this case (2-3 sentences maximum): state only that several distinct
+   wines exist under this name and ask the user to specify which one. Do NOT repeat the
+   per-wine details, dosages, sources or vinification in "note" — all of that belongs in
+   "versions" only. Never duplicate the same information in both fields.
 A range in dosage_gl is ONLY allowed when all the numbers come from case (a).
 If a number is not found, say so honestly and give the category range as fallback.
 
