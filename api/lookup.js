@@ -26,7 +26,23 @@ DOSAGE vs RESIDUAL SUGAR:
 - Below it, FINAL residual sugar (RS) if available, noting RS = natural remainder + dosage.
 - Label which one each source gives; never pass dosage off as RS or vice versa.
 
-CATEGORY: set by FINAL RS, with the legal ±3 g/L tolerance (overlap zones).
+CATEGORY: set by FINAL RS. State the category range with BOTH bounds, exactly and briefly:
+Brut Nature 0-3, Extra Brut 0-6, Brut 0-12, Extra Dry 12-17, Sec/Dry 17-32, Demi-Sec 32-50, Doux 50+ g/L.
+Never invent a lower bound, never extend an upper bound by the tolerance, and do not add
+phrases like "legal maximum" or "legal threshold" to the range itself. The ±3 g/L tolerance
+is a labelling allowance — mention it only when it actually matters, as a separate remark.
+For non-Champagne appellations use that appellation's own limits and say which appellation.
+
+NEVER MIX THE TWO FIGURES: if a source gives only residual sugar (RS), put it in rs_gl and
+leave dosage_gl null. If a source gives only dosage, put it in dosage_gl and leave rs_gl null.
+Even when the numbers would be close, never copy one into the other field. Only fill both when
+two separate figures are actually published.
+
+BATCH VARIABILITY WARNING: when the dosage figure comes from a source that does not state a
+disgorgement date, or when this cuvée is known to vary between disgorgements, say so plainly
+in "note": the figure belongs to an unidentified batch and the bottle in the user's hand may
+differ. Add that many growers print the exact dosage and disgorgement date on the BACK LABEL,
+and that this is the most reliable figure for their specific bottle.
 BRUT NATURE: dosage = 0 (adding dosage is forbidden); its sugar is purely natural remainder.
 DISTINGUISH TWO DIFFERENT THINGS — this is critical:
 (a) SAME wine, different batches (different disgorgement dates or base years of one NV cuvée).
@@ -60,7 +76,9 @@ Respond with a JSON object:
  "category": "...", "category_range": "...",
  "producer_state": "confirmed"|"vintage_not_listed"|"unverified",
  "note": "explanatory text IN {{LANG}}",
- "sources": [ {"rank":1,"name":"...","country":"...","kind":"producer|importer|critic|shop","value":"...","meta":"...","url":"..."} ],
+ "sources": [ {"rank":1,"name":"...","country":"...","kind":"producer|importer|critic|shop","primary":true|false,"value":"...","meta":"...","url":"..."} ],
+ (set "primary": true ONLY for a source that actually yielded data for the requested wine.
+  Never mark a source primary if it was unreachable, empty, or about a different cuvee.)
  "batches": [ {"label":"...","meta":"...","value":"..."} ],
  "ambiguous": true|false,
  "versions": [ {"name":"...","dosage":"...","meta":"...","url":"..."} ]
@@ -91,7 +109,11 @@ export default async function handler(req, res) {
               '\n\nFIRST identify the wine from this bottle label photo: read the producer, cuvée name, ' +
               'lieu-dit if present, vintage, and sweetness category exactly as printed. Put the full ' +
               'identified name in "wine". If the label is unreadable or not a wine label, say so in "note" ' +
-              'and set found fields to null. THEN look up its sugar data following all rules above.' }
+              'and set found fields to null. Report ONLY what is actually printed on the label — never
+   guess a similar-looking wine term (e.g. "non filtree" is NOT "non dose"); if a word is
+   unclear, say it is unclear instead of substituting a plausible term. Never state that
+   something appears on the label when you actually found it online; keep "read from label"
+   and "found by search" clearly separate. THEN look up its sugar data following all rules above.' }
           ] : RULES.replaceAll('{{LANG}}', language) + '\n\nWine: ' + wine }],
         tools: [{ type: 'web_search_20250305', name: 'web_search' }]
       })
