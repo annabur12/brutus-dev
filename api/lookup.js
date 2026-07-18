@@ -77,8 +77,8 @@ Respond with a JSON object:
  "producer_state": "confirmed"|"vintage_not_listed"|"unverified",
  "note": "explanatory text IN {{LANG}}",
  "sources": [ {"rank":1,"name":"...","country":"...","kind":"producer|importer|critic|shop","primary":true|false,"value":"...","meta":"...","url":"..."} ],
- // set primary to true ONLY for a source that actually yielded data for the requested wine
- // never mark a source primary if it was unreachable, empty, or about a different cuvee
+ // set primary to true for EXACTLY ONE source: the one the headline dosage_gl figure was taken from
+ // if dosage_gl is null, set primary to false everywhere; never mark more than one source
  "batches": [ {"label":"...","meta":"...","value":"..."} ],
  "ambiguous": true|false,
  "versions": [ {"name":"...","dosage":"...","meta":"...","url":"..."} ]
