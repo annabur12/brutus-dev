@@ -1,0 +1,261 @@
+<!-- index.html — страница Brut(us). Три языка, дизайн, карточка, простой лимит.
+     Секретного ключа здесь НЕТ: запрос уходит на /api/lookup, ключ живёт на сервере. -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Brut(us)</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#0a0a0a; color:#b8b8b8; font-family:'IBM Plex Mono',monospace; font-weight:300; min-height:100vh; display:flex; justify-content:center; padding:44px 20px; }
+.wrap { width:100%; max-width:580px; }
+.topbar { display:flex; justify-content:flex-end; gap:4px; margin-bottom:20px; }
+.lang { background:#141414; border:1px solid #2a2a2a; color:#9a9a9a; font-family:inherit; font-weight:300; font-size:12px; padding:5px 11px; cursor:pointer; }
+.lang.on { color:#fff; background:#1e1e1e; border-color:#4a4a4a; }
+.title { font-size:40px; font-weight:400; color:#fff; letter-spacing:1px; margin-bottom:26px; }
+.motto1 { font-size:19px; color:#fff; min-height:26px; margin-bottom:6px; letter-spacing:0.5px; }
+.motto2 { font-size:13px; color:#9a9a9a; min-height:18px; margin-bottom:38px; letter-spacing:0.3px; }
+.caret { border-right:2px solid #fff; animation:blink 0.7s step-end infinite; }
+@keyframes blink { 50%{border-color:transparent;} }
+.field-wrap { position:relative; }
+input[type=text] { width:100%; background:#141414; border:1px solid #2a2a2a; color:#fff; padding:14px 16px; font-family:inherit; font-weight:300; font-size:15px; outline:none; }
+input[type=text]:focus { border-color:#4a4a4a; }
+input::placeholder { color:#555; }
+.suggestions { position:absolute; top:100%; left:0; right:0; background:#161616; border:1px solid #2a2a2a; border-top:none; z-index:10; max-height:230px; overflow-y:auto; }
+.suggestion { padding:11px 16px; cursor:pointer; font-size:13px; color:#b8b8b8; border-bottom:1px solid #1e1e1e; }
+.suggestion:hover { background:#1e1e1e; color:#fff; }
+.btn { width:100%; background:#1e1e1e; border:1px solid #3a3a3a; color:#fff; padding:14px; font-family:inherit; font-weight:300; font-size:14px; letter-spacing:1px; cursor:pointer; margin-top:14px; }
+.btn:hover:not(:disabled) { background:#2a2a2a; border-color:#4a4a4a; }
+.btn:disabled { opacity:0.4; cursor:default; }
+.result { margin-top:32px; border:1px solid #2a2a2a; background:#111; padding:26px; display:none; }
+.result.show { display:block; }
+.wine { color:#fff; font-size:17px; font-weight:400; margin-bottom:4px; line-height:1.4; }
+.region { color:#9a9a9a; font-size:12px; margin-bottom:22px; }
+.dos-label { color:#9a9a9a; font-size:11px; letter-spacing:1px; margin-bottom:2px; }
+.headline { display:flex; align-items:baseline; gap:10px; margin-bottom:4px; }
+.big { color:#fff; font-size:40px; font-weight:400; letter-spacing:1px; }
+.unit { color:#8a8a8a; font-size:15px; }
+.cat { display:inline-block; border:1px solid #3a3a3a; color:#c9a96a; font-size:11px; padding:3px 9px; margin-bottom:18px; letter-spacing:0.5px; }
+.rs-block { background:#0d0d0d; border:1px solid #1e1e1e; padding:13px 15px; margin-bottom:18px; }
+.rs-row { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; }
+.rs-key { color:#9a9a9a; font-size:12px; }
+.rs-val { color:#fff; font-size:14px; }
+.rs-note { color:#9a9a9a; font-size:11px; line-height:1.6; }
+.priority { border-top:1px solid #1e1e1e; padding-top:18px; }
+.p-title { color:#9a9a9a; font-size:11px; letter-spacing:1px; margin-bottom:14px; }
+.src { display:flex; align-items:flex-start; gap:10px; padding:9px 0; }
+.rank { color:#555; font-size:11px; min-width:16px; padding-top:2px; }
+.src-body { flex:1; }
+.src-name { color:#fff; font-size:13px; }
+.src-name .flag { color:#c9a96a; }
+.tag { display:inline-block; background:#1e2a1e; color:#8fbf7f; font-size:10px; padding:1px 6px; margin-left:6px; letter-spacing:0.5px; }
+.src-meta { color:#9a9a9a; font-size:11px; margin-top:2px; line-height:1.5; }
+.src-meta a { color:#6a9bc9; text-decoration:none; }
+.src-meta a:hover { text-decoration:underline; }
+.src-val { color:#fff; font-size:15px; white-space:nowrap; padding-top:1px; }
+.toggle { margin-top:18px; border-top:1px solid #1e1e1e; padding-top:14px; }
+.toggle-btn { background:none; border:none; color:#8a8a8a; font-family:inherit; font-weight:300; font-size:12px; cursor:pointer; padding:0; display:flex; align-items:center; gap:8px; letter-spacing:0.5px; }
+.toggle-btn:hover { color:#fff; }
+.chev { transition:transform 0.2s; }
+.toggle-btn.open .chev { transform:rotate(90deg); }
+.batches { display:none; margin-top:14px; }
+.batches.open { display:block; }
+.batch { display:flex; justify-content:space-between; align-items:baseline; padding:10px 0; border-bottom:1px solid #1a1a1a; }
+.batch:last-child { border-bottom:none; }
+.b-left { font-size:12px; color:#b8b8b8; }
+.b-meta { color:#9a9a9a; font-size:11px; margin-top:2px; }
+.b-val { color:#fff; font-size:14px; white-space:nowrap; }
+.note { margin-top:20px; border-top:1px solid #1e1e1e; padding-top:14px; color:#7a7a6a; font-size:11px; line-height:1.7; }
+.spinner { text-align:center; color:#9a9a9a; font-size:13px; padding:8px 0; }
+.dots::after { content:''; animation:dots 1.4s infinite; }
+@keyframes dots { 0%,20%{content:'';}40%{content:'.';}60%{content:'..';}80%,100%{content:'...';} }
+.err { color:#c97a7a; font-size:13px; line-height:1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <button class="lang on" data-l="en">EN</button>
+    <button class="lang" data-l="ru">RU</button>
+    <button class="lang" data-l="de">DE</button>
+  </div>
+  <div class="title">Brut(us)</div>
+  <div class="motto1" id="m1"></div>
+  <div class="motto2" id="m2"></div>
+
+  <div class="field-wrap">
+    <input type="text" id="wine" autocomplete="off" />
+    <div class="suggestions" id="sug" style="display:none"></div>
+  </div>
+  <button class="btn" id="go"></button>
+
+  <div class="result" id="result"></div>
+</div>
+
+<script>
+// ---------- переводы интерфейса ----------
+const T = {
+  en: { m1:'Et tu, Brut?', m2:'Find sugar in your wine (g/L) with a source',
+        ph:'start typing a wine name…', go:'FIND SUGAR',
+        loading:'searching producer tech sheets', dosage:'DOSAGE · sugar added', unit:'g/L',
+        rsKey:'Residual sugar (final)', notPub:'not published',
+        rsNote:'RS = natural sugar from fermentation + dosage. Producers usually publish only dosage; final RS may be higher.',
+        sources:'SOURCES BY PRIORITY', primary:'PRIMARY',
+        batches:'by vintage / disgorgement', catBy:'category set by final RS',
+        limit:'Daily limit reached for this browser. Please come back tomorrow, or search a wine you looked up before.',
+        empty:'Type a wine name first.', fail:'Lookup failed. Please try again in a moment.' },
+  ru: { m1:'Et tu, Brut?', m2:'Найди сахар в своём вине (г/л) с источником',
+        ph:'начните вводить название вина…', go:'НАЙТИ САХАР',
+        loading:'ищу техлисты производителя', dosage:'ДОЗАЖ · добавленный сахар', unit:'г/л',
+        rsKey:'Остаточный сахар (итог)', notPub:'не опубликован',
+        rsNote:'RS = природный сахар от брожения + дозаж. Производители обычно публикуют только дозаж; итоговый RS может быть выше.',
+        sources:'ИСТОЧНИКИ ПО ПРИОРИТЕТУ', primary:'ОСНОВНОЙ',
+        batches:'по винтажам / дегоржажу', catBy:'категория — по итоговому RS',
+        limit:'Дневной лимит для этого браузера исчерпан. Зайдите завтра или поищите вино, которое уже смотрели.',
+        empty:'Сначала введите название вина.', fail:'Поиск не удался. Попробуйте ещё раз через минуту.' },
+  de: { m1:'Et tu, Brut?', m2:'Finde den Zucker in deinem Wein (g/L) mit Quelle',
+        ph:'Weinnamen eingeben…', go:'ZUCKER FINDEN',
+        loading:'suche Produzenten-Datenblätter', dosage:'DOSAGE · zugesetzter Zucker', unit:'g/L',
+        rsKey:'Restzucker (final)', notPub:'nicht veröffentlicht',
+        rsNote:'RS = natürlicher Zucker aus der Gärung + Dosage. Produzenten veröffentlichen meist nur die Dosage; der finale RS kann höher sein.',
+        sources:'QUELLEN NACH PRIORITÄT', primary:'PRIMÄR',
+        batches:'nach Jahrgang / Degorgierung', catBy:'Kategorie nach finalem RS',
+        limit:'Tageslimit für diesen Browser erreicht. Bitte morgen wiederkommen oder einen bereits gesuchten Wein abrufen.',
+        empty:'Bitte zuerst einen Weinnamen eingeben.', fail:'Suche fehlgeschlagen. Bitte gleich noch einmal versuchen.' }
+};
+let lang = 'en';
+
+// ---------- список для автоподсказок ----------
+const WINES = ['Veuve Clicquot Brut Yellow Label','Moët & Chandon Impérial Brut','Dom Pérignon Vintage Brut',
+'Louis Roederer Cristal Brut','Ruinart Blanc de Blancs','Bollinger Special Cuvée Brut','Taittinger Brut Réserve',
+'Pol Roger Brut Réserve','Krug Grande Cuvée','Laurent-Perrier La Cuvée Brut','Perrier-Jouët Grand Brut',
+'Champagne Lanson Le Black Label Brut','Champagne Gosset Grande Réserve Brut','Champagne Billecart-Salmon Brut Réserve',
+'Chartogne-Taillet Cuvée Sainte-Anne Brut','René Geoffroy Empreinte Blanc de Noirs 1er Cru','René Geoffroy Rosé de Saignée 1er Cru',
+'Ferrari Brut Trento','Franciacorta Ca\' del Bosco Cuvée Prestige','Juvé & Camps Reserva de la Familia Brut Nature',
+'Freixenet Cordon Negro Brut','Codorníu Clásico Brut','Roederer Estate Brut','Graham Beck Brut'];
+
+// ---------- применить язык ----------
+const $ = id => document.getElementById(id);
+function applyLang() {
+  const t = T[lang];
+  document.documentElement.lang = lang;
+  $('wine').placeholder = t.ph;
+  $('go').textContent = t.go;
+  document.querySelectorAll('.lang').forEach(b => b.classList.toggle('on', b.dataset.l===lang));
+}
+document.querySelectorAll('.lang').forEach(b => b.addEventListener('click', () => {
+  lang = b.dataset.l; applyLang();
+  // перепечатать девиз на новом языке
+  m1el.textContent=''; m2el.textContent=''; typeMotto();
+}));
+
+// ---------- печатающийся девиз со звуком ----------
+const m1el = $('m1'), m2el = $('m2');
+let actx;
+function click() { try {
+  if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)();
+  const o=actx.createOscillator(), g=actx.createGain();
+  o.type='square'; o.frequency.value=1400+Math.random()*600;
+  g.gain.setValueAtTime(0.04,actx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001,actx.currentTime+0.03);
+  o.connect(g); g.connect(actx.destination); o.start(); o.stop(actx.currentTime+0.03);
+} catch(e){} }
+function typeInto(el,txt,done){ let i=0; el.classList.add('caret');
+  (function tick(){ if(i<txt.length){ el.textContent=txt.slice(0,i+1); click(); i++; setTimeout(tick,50); }
+    else { el.classList.remove('caret'); done&&done(); } })(); }
+function typeMotto(){ const t=T[lang]; typeInto(m1el,t.m1,()=>setTimeout(()=>typeInto(m2el,t.m2),200)); }
+let started=false; const kick=()=>{ if(!started){started=true; typeMotto();} };
+window.addEventListener('click',kick,{once:true}); window.addEventListener('keydown',kick,{once:true});
+setTimeout(()=>{ if(!started){started=true; typeMotto();} },1200);
+
+// ---------- автоподсказки ----------
+const wineInput=$('wine'), sugBox=$('sug');
+wineInput.addEventListener('input',()=>{
+  const v=wineInput.value.trim().toLowerCase();
+  if(v.length<2){ sugBox.style.display='none'; return; }
+  const m=WINES.filter(w=>w.toLowerCase().includes(v)).slice(0,7);
+  if(!m.length){ sugBox.style.display='none'; return; }
+  sugBox.innerHTML=m.map(w=>'<div class="suggestion">'+w+'</div>').join('');
+  sugBox.style.display='block';
+  sugBox.querySelectorAll('.suggestion').forEach(s=>s.addEventListener('click',()=>{
+    wineInput.value=s.textContent; sugBox.style.display='none'; }));
+});
+document.addEventListener('click',e=>{ if(!e.target.closest('.field-wrap')) sugBox.style.display='none'; });
+
+// ---------- простой дневной лимит по браузеру ----------
+const LIMIT=25;
+function overLimit(){
+  const today=new Date().toISOString().slice(0,10);
+  let d={}; try{ d=JSON.parse(localStorage.getItem('brutus_lim')||'{}'); }catch(e){}
+  if(d.day!==today){ d={day:today,n:0}; }
+  if(d.n>=LIMIT) return true;
+  d.n++; localStorage.setItem('brutus_lim',JSON.stringify(d)); return false;
+}
+
+// ---------- поиск ----------
+const result=$('result');
+function loading(){ result.classList.add('show'); result.innerHTML='<div class="spinner">'+T[lang].loading+'<span class="dots"></span></div>'; }
+
+async function run(){
+  const wine=wineInput.value.trim();
+  if(!wine){ result.classList.add('show'); result.innerHTML='<div class="err">'+T[lang].empty+'</div>'; return; }
+  if(overLimit()){ result.classList.add('show'); result.innerHTML='<div class="err">'+T[lang].limit+'</div>'; return; }
+  sugBox.style.display='none'; loading();
+  try{
+    const r=await fetch('/api/lookup',{ method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ wine, lang }) });
+    const d=await r.json();
+    if(d.error){ throw new Error(typeof d.error==='string'?d.error:JSON.stringify(d.error)); }
+    render(d.raw);
+  }catch(e){ result.innerHTML='<div class="err">'+T[lang].fail+'<br><br>DEBUG: '+String(e.message||e)+'</div>'; }
+}
+$('go').addEventListener('click',run);
+wineInput.addEventListener('keydown',e=>{ if(e.key==='Enter') run(); });
+
+// ---------- отрисовка карточки ----------
+function esc(s){ return String(s==null?'':s).replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c])); }
+function render(raw){
+  const t=T[lang]; let o;
+  try{ const c=raw.replace(/```json|```/g,'').trim(); o=JSON.parse(c.slice(c.indexOf('{'),c.lastIndexOf('}')+1)); }
+  catch(e){ result.innerHTML='<div class="err">'+t.fail+'</div>'; return; }
+
+  let h='<div class="wine">'+esc(o.wine)+'</div>';
+  if(o.region) h+='<div class="region">'+esc(o.region)+'</div>';
+
+  h+='<div class="dos-label">'+t.dosage+'</div>';
+  h+='<div class="headline"><span class="big">'+esc(o.dosage_gl!=null?o.dosage_gl:'—')+'</span><span class="unit">'+t.unit+'</span></div>';
+  if(o.category) h+='<div class="cat">'+esc(o.category)+(o.category_range?' · '+esc(o.category_range):'')+' · '+t.catBy+'</div>';
+
+  h+='<div class="rs-block"><div class="rs-row"><span class="rs-key">'+t.rsKey+'</span><span class="rs-val">'+
+     (o.rs_published&&o.rs_gl!=null?esc(o.rs_gl)+' '+t.unit:t.notPub)+'</span></div>';
+  h+='<div class="rs-note">'+esc(o.note||t.rsNote)+'</div></div>';
+
+  if(Array.isArray(o.sources)&&o.sources.length){
+    h+='<div class="priority"><div class="p-title">'+t.sources+'</div>';
+    o.sources.forEach(s=>{
+      const flag=(s.country&&/switz|swiss|schweiz|suisse|ch/i.test(s.country))?' <span class="flag">🇨🇭</span>':'';
+      const prim=(s.kind==='producer')?'<span class="tag">'+t.primary+'</span>':'';
+      h+='<div class="src"><span class="rank">'+esc(s.rank||'')+'</span><div class="src-body">'+
+         '<div class="src-name">'+esc(s.name)+flag+prim+'</div>'+
+         '<div class="src-meta">'+esc(s.meta||'')+(s.url?' · <a href="'+esc(s.url)+'" target="_blank">link</a>':'')+'</div></div>'+
+         '<span class="src-val">'+esc(s.value||'—')+'</span></div>';
+    });
+    h+='</div>';
+  }
+
+  if(Array.isArray(o.batches)&&o.batches.length){
+    h+='<div class="toggle"><button class="toggle-btn" id="tg"><span class="chev">▸</span><span>'+t.batches+' ('+o.batches.length+')</span></button><div class="batches" id="bt">';
+    o.batches.forEach(b=>{ h+='<div class="batch"><div><div class="b-left">'+esc(b.label)+'</div><div class="b-meta">'+esc(b.meta||'')+'</div></div><span class="b-val">'+esc(b.value||'')+'</span></div>'; });
+    h+='</div></div>';
+  }
+
+  result.innerHTML=h;
+  const tg=$('tg'); if(tg) tg.addEventListener('click',()=>{ tg.classList.toggle('open'); $('bt').classList.toggle('open'); });
+}
+
+applyLang();
+</script>
+</body>
+</html>
