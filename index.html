@@ -32,7 +32,8 @@ input::placeholder { color:#555; }
 .photo-row { display:flex; gap:8px; margin-top:10px; align-items:center; }
 .photo-btn { flex:1; background:#141414; border:1px dashed #3a3a3a; color:#9a9a9a; padding:12px; font-family:inherit; font-weight:300; font-size:12px; cursor:pointer; }
 .photo-btn:hover { border-color:#4a4a4a; color:#fff; }
-.thumb { max-height:54px; border:1px solid #2a2a2a; }
+.thumb { max-height:54px; border:1px solid #2a2a2a; display:none; }
+.thumb[src] { display:block; }
 .clear-photo { background:none; border:none; color:#9a9a9a; font-family:inherit; font-size:11px; cursor:pointer; text-decoration:underline; }
 .result { margin-top:32px; border:1px solid #2a2a2a; background:#111; padding:26px; display:none; }
 .result.show { display:block; }
@@ -48,6 +49,10 @@ input::placeholder { color:#555; }
 .rs-key { color:#9a9a9a; font-size:12px; }
 .rs-val { color:#fff; font-size:14px; }
 .rs-note { color:#9a9a9a; font-size:11px; line-height:1.6; }
+.note-short { max-height:64px; overflow:hidden; position:relative; }
+.note-more { background:none; border:none; color:#c9a96a; font-family:inherit; font-weight:300; font-size:11px; cursor:pointer; padding:6px 0 0 0; text-decoration:underline; }
+.copy-btn { background:#1e1e1e; border:1px solid #3a3a3a; color:#9a9a9a; font-family:inherit; font-weight:300; font-size:11px; padding:7px 12px; cursor:pointer; margin-top:16px; }
+.copy-btn:hover { color:#fff; border-color:#4a4a4a; }
 .vers { border:1px solid #3a2f1e; background:#141008; padding:14px 15px; margin-bottom:18px; }
 .v-title { color:#c9a96a; font-size:11px; letter-spacing:1px; margin-bottom:10px; }
 .v-item { display:flex; justify-content:space-between; align-items:baseline; gap:12px; padding:8px 0; border-bottom:1px solid #241d10; }
@@ -102,13 +107,13 @@ input::placeholder { color:#555; }
     <input type="text" id="wine" autocomplete="off" />
     <div class="suggestions" id="sug" style="display:none"></div>
   </div>
-  <button class="btn" id="go"></button><button class="btn" id="go"></button>
-  <div class="photo-row">
+ <div class="photo-row">
     <button class="photo-btn" id="photoBtn"></button>
     <img id="thumb" class="thumb" style="display:none" />
     <button class="clear-photo" id="clearPhoto" style="display:none">×</button>
   </div>
   <input type="file" id="fileInput" accept="image/*" style="display:none" />
+  <button class="btn" id="go"></button>
 
   <div class="result" id="result"></div>
 </div>
@@ -125,6 +130,7 @@ const T = {
         batches:'by vintage / disgorgement', catBy:'category set by final RS',
         versions:'DIFFERENT WINES UNDER THIS NAME — CHOOSE ONE',
         photo:'📷 photo of the label', reading:'reading the label',
+        more:'show more', less:'show less', copy:'copy result', copied:'copied ✓',
         limit:'Daily limit reached for this browser. Please come back tomorrow, or search a wine you looked up before.',
         empty:'Type a wine name first.', fail:'Lookup failed. Please try again in a moment.' },
   ru: { m1:'Et tu, Brut?', m2:'Найди сахар в своём вине (г/л) с источником',
@@ -136,6 +142,7 @@ const T = {
         batches:'по винтажам / дегоржажу', catBy:'категория — по итоговому RS',
         versions:'РАЗНЫЕ ВИНА ПОД ЭТИМ НАЗВАНИЕМ — ВЫБЕРИТЕ НУЖНОЕ',
         photo:'📷 фото этикетки', reading:'читаю этикетку',
+        more:'подробнее', less:'свернуть', copy:'копировать результат', copied:'скопировано ✓',
         limit:'Дневной лимит для этого браузера исчерпан. Зайдите завтра или поищите вино, которое уже смотрели.',
         empty:'Сначала введите название вина.', fail:'Поиск не удался. Попробуйте ещё раз через минуту.' },
   de: { m1:'Et tu, Brut?', m2:'Finde den Zucker in deinem Wein (g/L) mit Quelle',
@@ -147,6 +154,7 @@ const T = {
         batches:'nach Jahrgang / Degorgierung', catBy:'Kategorie nach finalem RS',
         versions:'VERSCHIEDENE WEINE UNTER DIESEM NAMEN — BITTE WÄHLEN',
         photo:'📷 Foto des Etiketts', reading:'lese das Etikett',
+        more:'mehr anzeigen', less:'weniger', copy:'Ergebnis kopieren', copied:'kopiert ✓',
         limit:'Tageslimit für diesen Browser erreicht. Bitte morgen wiederkommen oder einen bereits gesuchten Wein abrufen.',
         empty:'Bitte zuerst einen Weinnamen eingeben.', fail:'Suche fehlgeschlagen. Bitte gleich noch einmal versuchen.' }
 };
@@ -278,7 +286,11 @@ function render(raw){
 
   h+='<div class="rs-block"><div class="rs-row"><span class="rs-key">'+t.rsKey+'</span><span class="rs-val">'+
      (o.rs_published&&o.rs_gl!=null?esc(o.rs_gl)+' '+t.unit:t.notPub)+'</span></div>';
-  h+='<div class="rs-note">'+esc(o.note||t.rsNote)+'</div></div>';
+  const noteTxt=o.note||t.rsNote;
+  const longNote=noteTxt.length>260;
+  h+='<div class="rs-note'+(longNote?' note-short':'')+'" id="noteBox">'+esc(noteTxt)+'</div>';
+  if(longNote) h+='<button class="note-more" id="noteMore">'+t.more+'</button>';
+  h+='</div>';
      if(o.ambiguous && Array.isArray(o.versions) && o.versions.length){
     h+='<div class="vers"><div class="v-title">'+t.versions+'</div>';
     o.versions.forEach(v=>{
@@ -293,7 +305,7 @@ function render(raw){
     h+='<div class="priority"><div class="p-title">'+t.sources+'</div>';
     o.sources.forEach(s=>{
       const flag=(s.country&&/switz|swiss|schweiz|suisse|ch/i.test(s.country))?' <span class="flag">🇨🇭</span>':'';
-      const prim=(s.kind==='producer')?'<span class="tag">'+t.primary+'</span>':'';
+      const prim=(s.primary===true)?'<span class="tag">'+t.primary+'</span>':'';
       h+='<div class="src"><span class="rank">'+esc(s.rank||'')+'</span><div class="src-body">'+
          '<div class="src-name">'+esc(s.name)+flag+prim+'</div>'+
          '<div class="src-meta">'+esc(s.meta||'')+(s.url?' · <a href="'+esc(s.url)+'" target="_blank">link</a>':'')+'</div></div>'+
@@ -308,7 +320,19 @@ function render(raw){
     h+='</div></div>';
   }
 
+  h+='<button class="copy-btn" id="copyBtn">'+t.copy+'</button>';
   result.innerHTML=h;
+  const nm=$('noteMore');
+  if(nm) nm.addEventListener('click',()=>{
+    const box=$('noteBox'), open=box.classList.toggle('note-short');
+    nm.textContent = open ? t.more : t.less;
+  });
+  const cb=$('copyBtn');
+  if(cb) cb.addEventListener('click',()=>{
+    const txt=result.innerText.replace(/\n{3,}/g,'\n\n');
+    navigator.clipboard.writeText(txt).then(()=>{ cb.textContent=t.copied;
+      setTimeout(()=>cb.textContent=t.copy,1800); });
+  });
   const tg=$('tg'); if(tg) tg.addEventListener('click',()=>{ tg.classList.toggle('open'); $('bt').classList.toggle('open'); });
 }
 
