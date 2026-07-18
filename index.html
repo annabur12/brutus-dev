@@ -131,6 +131,7 @@ const T = {
         versions:'DIFFERENT WINES UNDER THIS NAME — CHOOSE ONE',
         photo:'📷 photo of the label', reading:'reading the label',
         more:'show more', less:'show less', copy:'copy result', copied:'copied ✓',
+        refresh:'↻ refresh data', cachedNote:'saved result',
         limit:'Daily limit reached for this browser. Please come back tomorrow, or search a wine you looked up before.',
         empty:'Type a wine name first.', fail:'Lookup failed. Please try again in a moment.' },
   ru: { m1:'Et tu, Brut?', m2:'Найди сахар в своём вине (г/л) с источником',
@@ -143,6 +144,7 @@ const T = {
         versions:'РАЗНЫЕ ВИНА ПОД ЭТИМ НАЗВАНИЕМ — ВЫБЕРИТЕ НУЖНОЕ',
         photo:'📷 фото этикетки', reading:'читаю этикетку',
         more:'подробнее', less:'свернуть', copy:'копировать результат', copied:'скопировано ✓',
+        refresh:'↻ обновить данные', cachedNote:'сохранённый результат',
         limit:'Дневной лимит для этого браузера исчерпан. Зайдите завтра или поищите вино, которое уже смотрели.',
         empty:'Сначала введите название вина.', fail:'Поиск не удался. Попробуйте ещё раз через минуту.' },
   de: { m1:'Et tu, Brut?', m2:'Finde den Zucker in deinem Wein (g/L) mit Quelle',
@@ -155,6 +157,7 @@ const T = {
         versions:'VERSCHIEDENE WEINE UNTER DIESEM NAMEN — BITTE WÄHLEN',
         photo:'📷 Foto des Etiketts', reading:'lese das Etikett',
         more:'mehr anzeigen', less:'weniger', copy:'Ergebnis kopieren', copied:'kopiert ✓',
+        refresh:'↻ Daten aktualisieren', cachedNote:'gespeichertes Ergebnis',
         limit:'Tageslimit für diesen Browser erreicht. Bitte morgen wiederkommen oder einen bereits gesuchten Wein abrufen.',
         empty:'Bitte zuerst einen Weinnamen eingeben.', fail:'Suche fehlgeschlagen. Bitte gleich noch einmal versuchen.' }
 };
@@ -231,17 +234,17 @@ function overLimit(){
 const result=$('result');
 function loading(){ result.classList.add('show'); result.innerHTML='<div class="spinner">'+T[lang].loading+'<span class="dots"></span></div>'; }
 
-async function run(){
+async function run(forceRefresh){
   const wine=wineInput.value.trim();
   if(!wine && !photoData){ result.classList.add('show'); result.innerHTML='<div class="err">'+T[lang].empty+'</div>'; return; }
   if(overLimit()){ result.classList.add('show'); result.innerHTML='<div class="err">'+T[lang].limit+'</div>'; return; }
   sugBox.style.display='none'; loading();
   try{
     const r=await fetch('/api/lookup',{ method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ wine, lang, image:photoData, imageType:photoMime }) });
+      body:JSON.stringify({ wine, lang, image:photoData, imageType:photoMime, refresh:forceRefresh }) });
     const d=await r.json();
     if(d.error){ throw new Error(typeof d.error==='string'?d.error:JSON.stringify(d.error)); }
-    render(d.raw);
+    render(d.raw, d.cached);
   }catch(e){ result.innerHTML='<div class="err">'+T[lang].fail+'<br><br>DEBUG: '+String(e.message||e)+'</div>'; }
 }
 let photoData=null, photoMime=null;
@@ -267,12 +270,12 @@ $('fileInput').addEventListener('change',()=>{
 });
 $('clearPhoto').addEventListener('click',()=>{ photoData=null; photoMime=null;
   $('fileInput').value=''; $('thumb').style.display='none'; $('clearPhoto').style.display='none'; });
-     $('go').addEventListener('click',run);
-wineInput.addEventListener('keydown',e=>{ if(e.key==='Enter') run(); });
+     $('go').addEventListener('click',()=>run(false));
+wineInput.addEventListener('keydown',e=>{ if(e.key==='Enter') run(false); });
 
 // ---------- отрисовка карточки ----------
 function esc(s){ return String(s==null?'':s).replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c])); }
-function render(raw){
+function render(raw, wasCached){
   const t=T[lang]; let o;
   try{ const c=raw.replace(/```json|```/g,'').trim(); o=JSON.parse(c.slice(c.indexOf('{'),c.lastIndexOf('}')+1)); }
   catch(e){ result.innerHTML='<div class="err">'+t.fail+'</div>'; return; }
@@ -321,13 +324,16 @@ function render(raw){
   }
 
   h+='<button class="copy-btn" id="copyBtn">'+t.copy+'</button>';
+  if(wasCached) h+=' <button class="copy-btn" id="refreshBtn">'+t.refresh+'</button>';
   result.innerHTML=h;
   const nm=$('noteMore');
   if(nm) nm.addEventListener('click',()=>{
     const box=$('noteBox'), open=box.classList.toggle('note-short');
     nm.textContent = open ? t.more : t.less;
   });
-  const cb=$('copyBtn');
+  const rb=$('refreshBtn');
+  if(rb) rb.addEventListener('click',()=>run(true));
+     const cb=$('copyBtn');
   if(cb) cb.addEventListener('click',()=>{
     const txt=result.innerText.replace(/\n{3,}/g,'\n\n');
     navigator.clipboard.writeText(txt).then(()=>{ cb.textContent=t.copied;
