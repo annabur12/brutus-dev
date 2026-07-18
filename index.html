@@ -29,6 +29,11 @@ input::placeholder { color:#555; }
 .btn { width:100%; background:#1e1e1e; border:1px solid #3a3a3a; color:#fff; padding:14px; font-family:inherit; font-weight:300; font-size:14px; letter-spacing:1px; cursor:pointer; margin-top:14px; }
 .btn:hover:not(:disabled) { background:#2a2a2a; border-color:#4a4a4a; }
 .btn:disabled { opacity:0.4; cursor:default; }
+.photo-row { display:flex; gap:8px; margin-top:10px; align-items:center; }
+.photo-btn { flex:1; background:#141414; border:1px dashed #3a3a3a; color:#9a9a9a; padding:12px; font-family:inherit; font-weight:300; font-size:12px; cursor:pointer; }
+.photo-btn:hover { border-color:#4a4a4a; color:#fff; }
+.thumb { max-height:54px; border:1px solid #2a2a2a; }
+.clear-photo { background:none; border:none; color:#9a9a9a; font-family:inherit; font-size:11px; cursor:pointer; text-decoration:underline; }
 .result { margin-top:32px; border:1px solid #2a2a2a; background:#111; padding:26px; display:none; }
 .result.show { display:block; }
 .wine { color:#fff; font-size:17px; font-weight:400; margin-bottom:4px; line-height:1.4; }
@@ -97,7 +102,13 @@ input::placeholder { color:#555; }
     <input type="text" id="wine" autocomplete="off" />
     <div class="suggestions" id="sug" style="display:none"></div>
   </div>
-  <button class="btn" id="go"></button>
+  <button class="btn" id="go"></button><button class="btn" id="go"></button>
+  <div class="photo-row">
+    <button class="photo-btn" id="photoBtn"></button>
+    <img id="thumb" class="thumb" style="display:none" />
+    <button class="clear-photo" id="clearPhoto" style="display:none">×</button>
+  </div>
+  <input type="file" id="fileInput" accept="image/*" capture="environment" style="display:none" />
 
   <div class="result" id="result"></div>
 </div>
@@ -113,6 +124,7 @@ const T = {
         sources:'SOURCES BY PRIORITY', primary:'PRIMARY',
         batches:'by vintage / disgorgement', catBy:'category set by final RS',
         versions:'DIFFERENT WINES UNDER THIS NAME — CHOOSE ONE',
+        photo:'📷 photo of the label', reading:'reading the label',
         limit:'Daily limit reached for this browser. Please come back tomorrow, or search a wine you looked up before.',
         empty:'Type a wine name first.', fail:'Lookup failed. Please try again in a moment.' },
   ru: { m1:'Et tu, Brut?', m2:'Найди сахар в своём вине (г/л) с источником',
@@ -123,6 +135,7 @@ const T = {
         sources:'ИСТОЧНИКИ ПО ПРИОРИТЕТУ', primary:'ОСНОВНОЙ',
         batches:'по винтажам / дегоржажу', catBy:'категория — по итоговому RS',
         versions:'РАЗНЫЕ ВИНА ПОД ЭТИМ НАЗВАНИЕМ — ВЫБЕРИТЕ НУЖНОЕ',
+        photo:'📷 фото этикетки', reading:'читаю этикетку',
         limit:'Дневной лимит для этого браузера исчерпан. Зайдите завтра или поищите вино, которое уже смотрели.',
         empty:'Сначала введите название вина.', fail:'Поиск не удался. Попробуйте ещё раз через минуту.' },
   de: { m1:'Et tu, Brut?', m2:'Finde den Zucker in deinem Wein (g/L) mit Quelle',
@@ -133,6 +146,7 @@ const T = {
         sources:'QUELLEN NACH PRIORITÄT', primary:'PRIMÄR',
         batches:'nach Jahrgang / Degorgierung', catBy:'Kategorie nach finalem RS',
         versions:'VERSCHIEDENE WEINE UNTER DIESEM NAMEN — BITTE WÄHLEN',
+        photo:'📷 Foto des Etiketts', reading:'lese das Etikett',
         limit:'Tageslimit für diesen Browser erreicht. Bitte morgen wiederkommen oder einen bereits gesuchten Wein abrufen.',
         empty:'Bitte zuerst einen Weinnamen eingeben.', fail:'Suche fehlgeschlagen. Bitte gleich noch einmal versuchen.' }
 };
@@ -211,18 +225,29 @@ function loading(){ result.classList.add('show'); result.innerHTML='<div class="
 
 async function run(){
   const wine=wineInput.value.trim();
-  if(!wine){ result.classList.add('show'); result.innerHTML='<div class="err">'+T[lang].empty+'</div>'; return; }
+  if(!wine && !photoData){ result.classList.add('show'); result.innerHTML='<div class="err">'+T[lang].empty+'</div>'; return; }
   if(overLimit()){ result.classList.add('show'); result.innerHTML='<div class="err">'+T[lang].limit+'</div>'; return; }
   sugBox.style.display='none'; loading();
   try{
     const r=await fetch('/api/lookup',{ method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ wine, lang }) });
+      body:JSON.stringify({ wine, lang, image:photoData, imageType:photoMime }) });
     const d=await r.json();
     if(d.error){ throw new Error(typeof d.error==='string'?d.error:JSON.stringify(d.error)); }
     render(d.raw);
   }catch(e){ result.innerHTML='<div class="err">'+T[lang].fail+'<br><br>DEBUG: '+String(e.message||e)+'</div>'; }
 }
-$('go').addEventListener('click',run);
+let photoData=null, photoMime=null;
+$('photoBtn').addEventListener('click',()=>$('fileInput').click());
+$('fileInput').addEventListener('change',()=>{
+  const f=$('fileInput').files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{ photoData=r.result.split(',')[1]; photoMime=f.type;
+    $('thumb').src=r.result; $('thumb').style.display='block'; $('clearPhoto').style.display='inline'; };
+  r.readAsDataURL(f);
+});
+$('clearPhoto').addEventListener('click',()=>{ photoData=null; photoMime=null;
+  $('fileInput').value=''; $('thumb').style.display='none'; $('clearPhoto').style.display='none'; });
+     $('go').addEventListener('click',run);
 wineInput.addEventListener('keydown',e=>{ if(e.key==='Enter') run(); });
 
 // ---------- отрисовка карточки ----------
@@ -275,6 +300,7 @@ function render(raw){
   const tg=$('tg'); if(tg) tg.addEventListener('click',()=>{ tg.classList.toggle('open'); $('bt').classList.toggle('open'); });
 }
 
+const _al=applyLang; applyLang=function(){ _al(); $('photoBtn').textContent=T[lang].photo; };
 applyLang();
 </script>
 </body>
