@@ -84,13 +84,48 @@ Respond with a JSON object:
  "versions": [ {"name":"...","dosage":"...","meta":"...","url":"..."} ]
 }`;
 
+const KV_URL = process.env.KV_REST_API_URL;
+const KV_TOK = process.env.KV_REST_API_TOKEN;
+const TTL = 60 * 60 * 24 * 90; // 90 days
+
+function cacheKey(wine, lang) {
+  const norm = String(wine).toLowerCase().normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+  return 'w:' + lang + ':' + norm;
+}
+
+async function cacheGet(key) {
+  if (!KV_URL || !KV_TOK) return null;
+  try {
+    const r = await fetch(KV_URL + '/get/' + encodeURIComponent(key),
+      { headers: { Authorization: 'Bearer ' + KV_TOK } });
+    const d = await r.json();
+    return d && d.result ? d.result : null;
+  } catch (e) { return null; }
+}
+
+async function cacheSet(key, value) {
+  if (!KV_URL || !KV_TOK) return;
+  try {
+    await fetch(KV_URL + '/set/' + encodeURIComponent(key) + '?EX=' + TTL, {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + KV_TOK, 'Content-Type': 'text/plain' },
+      body: value
+    });
+  } catch (e) {}
+}
 export default async function handler(req, res) {
   if (req.method !== 'POST') { res.status(405).json({error:'POST only'}); return; }
 
-  const { wine, lang, image, imageType } = req.body || {};
+ const { wine, lang, image, imageType, refresh } = req.body || {};
   if (!wine && !image) { res.status(400).json({error:'no input'}); return; }
   if (wine && String(wine).length > 200) { res.status(400).json({error:'bad wine'}); return; }
   const language = ({en:'English', ru:'Russian', de:'German'})[lang] || 'English';
+   const ck = (!image && wine) ? cacheKey(wine, lang || 'en') : null;
+  if (ck && !refresh) {
+    const hit = await cacheGet(ck);
+    if (hit) { res.status(200).json({ raw: hit, cached: true }); return; }
+  }
 
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
@@ -121,7 +156,8 @@ export default async function handler(req, res) {
     });
     const data = await r.json();
     const text = (data.content||[]).map(b=>b.type==='text'?b.text:'').join('\n');
-    res.status(200).json({ raw: text });
+    if (ck && text) await cacheSet(ck, text);
+    res.status(200).json({ raw: text, cached: false });
   } catch (e) {
     res.status(500).json({ error: String(e) });
   }
