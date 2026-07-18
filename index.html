@@ -43,6 +43,14 @@ input::placeholder { color:#555; }
 .rs-key { color:#9a9a9a; font-size:12px; }
 .rs-val { color:#fff; font-size:14px; }
 .rs-note { color:#9a9a9a; font-size:11px; line-height:1.6; }
+.vers { border:1px solid #3a2f1e; background:#141008; padding:14px 15px; margin-bottom:18px; }
+.v-title { color:#c9a96a; font-size:11px; letter-spacing:1px; margin-bottom:10px; }
+.v-item { display:flex; justify-content:space-between; align-items:baseline; gap:12px; padding:8px 0; border-bottom:1px solid #241d10; }
+.v-item:last-child { border-bottom:none; }
+.v-name { color:#fff; font-size:13px; }
+.v-meta { color:#9a9a9a; font-size:11px; margin-top:2px; line-height:1.5; }
+.v-meta a { color:#6a9bc9; text-decoration:none; }
+.v-dose { color:#fff; font-size:15px; white-space:nowrap; }
 .priority { border-top:1px solid #1e1e1e; padding-top:18px; }
 .p-title { color:#9a9a9a; font-size:11px; letter-spacing:1px; margin-bottom:14px; }
 .src { display:flex; align-items:flex-start; gap:10px; padding:9px 0; }
@@ -104,6 +112,7 @@ const T = {
         rsNote:'RS = natural sugar from fermentation + dosage. Producers usually publish only dosage; final RS may be higher.',
         sources:'SOURCES BY PRIORITY', primary:'PRIMARY',
         batches:'by vintage / disgorgement', catBy:'category set by final RS',
+        versions:'DIFFERENT WINES UNDER THIS NAME — CHOOSE ONE',
         limit:'Daily limit reached for this browser. Please come back tomorrow, or search a wine you looked up before.',
         empty:'Type a wine name first.', fail:'Lookup failed. Please try again in a moment.' },
   ru: { m1:'Et tu, Brut?', m2:'Найди сахар в своём вине (г/л) с источником',
@@ -113,6 +122,7 @@ const T = {
         rsNote:'RS = природный сахар от брожения + дозаж. Производители обычно публикуют только дозаж; итоговый RS может быть выше.',
         sources:'ИСТОЧНИКИ ПО ПРИОРИТЕТУ', primary:'ОСНОВНОЙ',
         batches:'по винтажам / дегоржажу', catBy:'категория — по итоговому RS',
+        versions:'РАЗНЫЕ ВИНА ПОД ЭТИМ НАЗВАНИЕМ — ВЫБЕРИТЕ НУЖНОЕ',
         limit:'Дневной лимит для этого браузера исчерпан. Зайдите завтра или поищите вино, которое уже смотрели.',
         empty:'Сначала введите название вина.', fail:'Поиск не удался. Попробуйте ещё раз через минуту.' },
   de: { m1:'Et tu, Brut?', m2:'Finde den Zucker in deinem Wein (g/L) mit Quelle',
@@ -122,6 +132,7 @@ const T = {
         rsNote:'RS = natürlicher Zucker aus der Gärung + Dosage. Produzenten veröffentlichen meist nur die Dosage; der finale RS kann höher sein.',
         sources:'QUELLEN NACH PRIORITÄT', primary:'PRIMÄR',
         batches:'nach Jahrgang / Degorgierung', catBy:'Kategorie nach finalem RS',
+        versions:'VERSCHIEDENE WEINE UNTER DIESEM NAMEN — BITTE WÄHLEN',
         limit:'Tageslimit für diesen Browser erreicht. Bitte morgen wiederkommen oder einen bereits gesuchten Wein abrufen.',
         empty:'Bitte zuerst einen Weinnamen eingeben.', fail:'Suche fehlgeschlagen. Bitte gleich noch einmal versuchen.' }
 };
@@ -231,6 +242,15 @@ function render(raw){
   h+='<div class="rs-block"><div class="rs-row"><span class="rs-key">'+t.rsKey+'</span><span class="rs-val">'+
      (o.rs_published&&o.rs_gl!=null?esc(o.rs_gl)+' '+t.unit:t.notPub)+'</span></div>';
   h+='<div class="rs-note">'+esc(o.note||t.rsNote)+'</div></div>';
+     if(o.ambiguous && Array.isArray(o.versions) && o.versions.length){
+    h+='<div class="vers"><div class="v-title">'+t.versions+'</div>';
+    o.versions.forEach(v=>{
+      h+='<div class="v-item"><div><div class="v-name">'+esc(v.name)+'</div>'+
+         '<div class="v-meta">'+esc(v.meta||'')+(v.url?' · <a href="'+esc(v.url)+'" target="_blank">link</a>':'')+'</div></div>'+
+         '<span class="v-dose">'+esc(v.dosage||'—')+'</span></div>';
+    });
+    h+='</div>';
+  }
 
   if(Array.isArray(o.sources)&&o.sources.length){
     h+='<div class="priority"><div class="p-title">'+t.sources+'</div>';
