@@ -103,17 +103,18 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 4000,
-       messages: [{ role:'user', content: image ? [
+        messages: [{ role:'user', content: image ? [
             { type:'image', source:{ type:'base64', media_type: imageType || 'image/jpeg', data: image } },
             { type:'text', text: RULES.replaceAll('{{LANG}}', language) +
               '\n\nFIRST identify the wine from this bottle label photo: read the producer, cuvée name, ' +
               'lieu-dit if present, vintage, and sweetness category exactly as printed. Put the full ' +
               'identified name in "wine". If the label is unreadable or not a wine label, say so in "note" ' +
-              'and set found fields to null. Report ONLY what is actually printed on the label — never
-   guess a similar-looking wine term (e.g. "non filtree" is NOT "non dose"); if a word is
-   unclear, say it is unclear instead of substituting a plausible term. Never state that
-   something appears on the label when you actually found it online; keep "read from label"
-   and "found by search" clearly separate. THEN look up its sugar data following all rules above.' }
+              'and set found fields to null. Report ONLY what is actually printed on the label. ' +
+              'Never guess a similar-looking wine term: non filtree is NOT non dose. ' +
+              'If a word is unclear, say it is unclear instead of substituting a plausible term. ' +
+              'Never state that something appears on the label when you actually found it online; ' +
+              'keep read-from-label and found-by-search clearly separate. ' +
+              'THEN look up its sugar data following all rules above.' }
           ] : RULES.replaceAll('{{LANG}}', language) + '\n\nWine: ' + wine }],
         tools: [{ type: 'web_search_20250305', name: 'web_search' }]
       })
