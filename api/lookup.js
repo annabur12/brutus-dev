@@ -28,7 +28,20 @@ DOSAGE vs RESIDUAL SUGAR:
 
 CATEGORY: set by FINAL RS, with the legal ±3 g/L tolerance (overlap zones).
 BRUT NATURE: dosage = 0 (adding dosage is forbidden); its sugar is purely natural remainder.
-Different vintages/disgorgements = different numbers: return a by-batch breakdown.
+DISTINGUISH TWO DIFFERENT THINGS — this is critical:
+(a) SAME wine, different batches (different disgorgement dates or base years of one NV cuvée).
+    These belong in "batches" and MAY be shown as a range in dosage_gl.
+(b) DIFFERENT wines sold under a similar name (separate lieux-dits, single-vineyard bottlings
+    vs assemblage, different cuvée names from the same producer and vintage).
+    These are SEPARATE PRODUCTS. NEVER average them and NEVER merge them into one range.
+If you find case (b), do NOT put a blended range in dosage_gl. Instead:
+ - set "ambiguous": true
+ - list each distinct wine in "versions" with its own name, dosage and source
+ - set dosage_gl to the figure of the single best-matching wine if the query clearly
+   identifies one, otherwise null
+ - in "note", state plainly at the very start that several distinct wines exist under this
+   name and that the user should specify which one (e.g. by lieu-dit or bottling).
+A range in dosage_gl is ONLY allowed when all the numbers come from case (a).
 If a number is not found, say so honestly and give the category range as fallback.
 
 NEVER TRANSLATE: numbers, wine names, producer names, categories (Brut Nature, Extra Brut,
@@ -46,7 +59,9 @@ Respond with a JSON object:
  "producer_state": "confirmed"|"vintage_not_listed"|"unverified",
  "note": "explanatory text IN {{LANG}}",
  "sources": [ {"rank":1,"name":"...","country":"...","kind":"producer|importer|critic|shop","value":"...","meta":"...","url":"..."} ],
- "batches": [ {"label":"...","meta":"...","value":"..."} ]
+ "batches": [ {"label":"...","meta":"...","value":"..."} ],
+ "ambiguous": true|false,
+ "versions": [ {"name":"...","dosage":"...","meta":"...","url":"..."} ]
 }`;
 
 export default async function handler(req, res) {
