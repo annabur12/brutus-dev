@@ -69,8 +69,9 @@ Respond with a JSON object:
 export default async function handler(req, res) {
   if (req.method !== 'POST') { res.status(405).json({error:'POST only'}); return; }
 
-  const { wine, lang } = req.body || {};
-  if (!wine || String(wine).length > 200) { res.status(400).json({error:'bad wine'}); return; }
+  const { wine, lang, image, imageType } = req.body || {};
+  if (!wine && !image) { res.status(400).json({error:'no input'}); return; }
+  if (wine && String(wine).length > 200) { res.status(400).json({error:'bad wine'}); return; }
   const language = ({en:'English', ru:'Russian', de:'German'})[lang] || 'English';
 
   try {
@@ -84,8 +85,14 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 4000,
-        messages: [{ role:'user',
-          content: RULES.replaceAll('{{LANG}}', language) + '\n\nWine: ' + wine }],
+       messages: [{ role:'user', content: image ? [
+            { type:'image', source:{ type:'base64', media_type: imageType || 'image/jpeg', data: image } },
+            { type:'text', text: RULES.replaceAll('{{LANG}}', language) +
+              '\n\nFIRST identify the wine from this bottle label photo: read the producer, cuvée name, ' +
+              'lieu-dit if present, vintage, and sweetness category exactly as printed. Put the full ' +
+              'identified name in "wine". If the label is unreadable or not a wine label, say so in "note" ' +
+              'and set found fields to null. THEN look up its sugar data following all rules above.' }
+          ] : RULES.replaceAll('{{LANG}}', language) + '\n\nWine: ' + wine }],
         tools: [{ type: 'web_search_20250305', name: 'web_search' }]
       })
     });
