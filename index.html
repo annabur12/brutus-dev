@@ -241,8 +241,20 @@ $('photoBtn').addEventListener('click',()=>$('fileInput').click());
 $('fileInput').addEventListener('change',()=>{
   const f=$('fileInput').files[0]; if(!f) return;
   const r=new FileReader();
-  r.onload=()=>{ photoData=r.result.split(',')[1]; photoMime=f.type;
-    $('thumb').src=r.result; $('thumb').style.display='block'; $('clearPhoto').style.display='inline'; };
+  r.onload=()=>{
+    const img=new Image();
+    img.onload=()=>{
+      const MAX=1400;
+      let w=img.width, h=img.height;
+      if(w>MAX||h>MAX){ const k=Math.min(MAX/w,MAX/h); w=Math.round(w*k); h=Math.round(h*k); }
+      const c=document.createElement('canvas'); c.width=w; c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      const small=c.toDataURL('image/jpeg',0.82);
+      photoData=small.split(',')[1]; photoMime='image/jpeg';
+      $('thumb').src=small; $('thumb').style.display='block'; $('clearPhoto').style.display='inline';
+    };
+    img.src=r.result;
+  };
   r.readAsDataURL(f);
 });
 $('clearPhoto').addEventListener('click',()=>{ photoData=null; photoMime=null;
