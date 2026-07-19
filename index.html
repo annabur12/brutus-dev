@@ -63,16 +63,19 @@ input::placeholder { color:#555; }
 .v-dose { color:#fff; font-size:15px; white-space:nowrap; }
 .priority { border-top:1px solid #1e1e1e; padding-top:18px; }
 .p-title { color:#9a9a9a; font-size:11px; letter-spacing:1px; margin-bottom:14px; }
-.src { display:flex; align-items:flex-start; gap:10px; padding:9px 0; }
+.src { display:block; padding:11px 0; border-bottom:1px solid #1a1a1a; }
+.src:last-child { border-bottom:none; }
+.src-head { display:flex; align-items:baseline; gap:10px; }
+.src-head .src-body { flex:1; min-width:0; }
 .rank { color:#555; font-size:11px; min-width:16px; padding-top:2px; }
 .src-body { flex:1; }
 .src-name { color:#fff; font-size:13px; }
 .src-name .flag { color:#c9a96a; }
 .tag { display:inline-block; background:#1e2a1e; color:#8fbf7f; font-size:10px; padding:1px 6px; margin-left:6px; letter-spacing:0.5px; }
-.src-meta { color:#9a9a9a; font-size:11px; margin-top:2px; line-height:1.5; }
+.src-meta { color:#9a9a9a; font-size:11px; margin-top:6px; line-height:1.5; }
 .src-meta a { color:#6a9bc9; text-decoration:none; }
 .src-meta a:hover { text-decoration:underline; }
-.src-val { color:#fff; font-size:15px; white-space:nowrap; padding-top:1px; }
+.src-val { color:#fff; font-size:14px; white-space:normal; text-align:right; flex:0 0 auto; max-width:45%; }
 .toggle { margin-top:18px; border-top:1px solid #1e1e1e; padding-top:14px; }
 .toggle-btn { background:none; border:none; color:#8a8a8a; font-family:inherit; font-weight:300; font-size:12px; cursor:pointer; padding:0; display:flex; align-items:center; gap:8px; letter-spacing:0.5px; }
 .toggle-btn:hover { color:#fff; }
@@ -309,10 +312,12 @@ function render(raw, wasCached){
     o.sources.forEach(s=>{
       const flag=(s.country&&/switz|swiss|schweiz|suisse|ch/i.test(s.country))?' <span class="flag">🇨🇭</span>':'';
       const prim=(s.primary===true)?'<span class="tag">'+t.primary+'</span>':'';
-      h+='<div class="src"><span class="rank">'+esc(s.rank||'')+'</span><div class="src-body">'+
-         '<div class="src-name">'+esc(s.name)+flag+prim+'</div>'+
-         '<div class="src-meta">'+esc(s.meta||'')+(s.url?' · <a href="'+esc(s.url)+'" target="_blank">link</a>':'')+'</div></div>'+
-         '<span class="src-val">'+esc(s.value||'—')+'</span></div>';
+     h+='<div class="src">'+
+         '<div class="src-head"><span class="rank">'+esc(s.rank||'')+'</span>'+
+         '<div class="src-body"><div class="src-name">'+esc(s.name)+flag+prim+'</div></div>'+
+         '<span class="src-val">'+esc(s.value||'—')+'</span></div>'+
+         '<div class="src-meta">'+esc(s.meta||'')+(s.url?' · <a href="'+esc(s.url)+'" target="_blank">link</a>':'')+'</div>'+
+         '</div>';
     });
     h+='</div>';
   }
