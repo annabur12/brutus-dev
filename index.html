@@ -201,8 +201,8 @@ function click() { if(!soundOn) return; try {
   const d=buf.getChannelData(0);
   for(let i=0;i<n;i++){ d[i]=(Math.random()*2-1)*Math.pow(1-i/n,7); }
   const src=actx.createBufferSource(); src.buffer=buf;
-  const f=actx.createBiquadFilter(); f.type='bandpass'; f.frequency.value=1800; f.Q.value=0.7;
-  const g=actx.createGain(); g.gain.value=0.5;
+  const f=actx.createBiquadFilter(); f.type='bandpass'; f.frequency.value=1700; f.Q.value=0.7;
+  const g=actx.createGain(); g.gain.value=0.3;
   src.connect(f); f.connect(g); g.connect(actx.destination);
   src.start();
 } catch(e){} }
