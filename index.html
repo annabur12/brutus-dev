@@ -274,7 +274,7 @@ $('fileInput').addEventListener('change',()=>{
   r.onload=()=>{
     const img=new Image();
     img.onload=()=>{
-      const MAX=1400;
+      const MAX=1200;
       let w=img.width, h=img.height;
       if(w>MAX||h>MAX){ const k=Math.min(MAX/w,MAX/h); w=Math.round(w*k); h=Math.round(h*k); }
       const c=document.createElement('canvas'); c.width=w; c.height=h;
