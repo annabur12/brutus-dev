@@ -135,7 +135,7 @@ const T = {
         sources:'SOURCES BY PRIORITY', primary:'FIGURE FROM HERE',
         batches:'by vintage / disgorgement', catBy:'category set by final RS',
         versions:'DIFFERENT WINES UNDER THIS NAME — CHOOSE ONE',
-        photo:'📷 photo of the label', reading:'reading the label',
+        photo:'📷 upload photo from gallery', reading:'reading the label',
         more:'show more', less:'show less', copy:'copy result', copied:'copied ✓',
         refresh:'↻ refresh data', cachedNote:'saved result',
         newSearch:'✕ clear',
@@ -149,7 +149,7 @@ const T = {
         sources:'ИСТОЧНИКИ ПО ПРИОРИТЕТУ', primary:'ИСТОЧНИК ЦИФРЫ',
         batches:'по винтажам / дегоржажу', catBy:'категория — по итоговому RS',
         versions:'РАЗНЫЕ ВИНА ПОД ЭТИМ НАЗВАНИЕМ — ВЫБЕРИТЕ НУЖНОЕ',
-        photo:'📷 фото этикетки', reading:'читаю этикетку',
+        photo:'📷 загрузить фото из галереи', reading:'читаю этикетку',
         more:'подробнее', less:'свернуть', copy:'копировать результат', copied:'скопировано ✓',
         refresh:'↻ обновить данные', cachedNote:'сохранённый результат',
         newSearch:'✕ очистить',
@@ -163,7 +163,7 @@ const T = {
         sources:'QUELLEN NACH PRIORITÄT', primary:'QUELLE DER ZAHL',
         batches:'nach Jahrgang / Degorgierung', catBy:'Kategorie nach finalem RS',
         versions:'VERSCHIEDENE WEINE UNTER DIESEM NAMEN — BITTE WÄHLEN',
-        photo:'📷 Foto des Etiketts', reading:'lese das Etikett',
+        photo:'📷 Foto aus der Galerie laden', reading:'lese das Etikett',
         more:'mehr anzeigen', less:'weniger', copy:'Ergebnis kopieren', copied:'kopiert ✓',
         refresh:'↻ Daten aktualisieren', cachedNote:'gespeichertes Ergebnis',
         newSearch:'✕ leeren',
@@ -274,7 +274,7 @@ $('fileInput').addEventListener('change',()=>{
   r.onload=()=>{
     const img=new Image();
     img.onload=()=>{
-      const MAX=1200;
+      const MAX=1400;
       let w=img.width, h=img.height;
       if(w>MAX||h>MAX){ const k=Math.min(MAX/w,MAX/h); w=Math.round(w*k); h=Math.round(h*k); }
       const c=document.createElement('canvas'); c.width=w; c.height=h;
