@@ -193,18 +193,24 @@ document.querySelectorAll('.lang').forEach(b => b.addEventListener('click', () =
 // ---------- печатающийся девиз со звуком ----------
 const m1el = $('m1'), m2el = $('m2');
 let actx;
-function click() { try {
+let soundOn=true;
+function click() { if(!soundOn) return; try {
   if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)();
   const o=actx.createOscillator(), g=actx.createGain();
-  o.type='square'; o.frequency.value=1400+Math.random()*600;
-  g.gain.setValueAtTime(0.04,actx.currentTime);
-  g.gain.exponentialRampToValueAtTime(0.001,actx.currentTime+0.03);
-  o.connect(g); g.connect(actx.destination); o.start(); o.stop(actx.currentTime+0.03);
+  o.type='triangle'; o.frequency.value=520+Math.random()*180;
+  g.gain.setValueAtTime(0.025,actx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001,actx.currentTime+0.05);
+  o.connect(g); g.connect(actx.destination); o.start(); o.stop(actx.currentTime+0.05);
 } catch(e){} }
 function typeInto(el,txt,done){ let i=0; el.classList.add('caret');
-  (function tick(){ if(i<txt.length){ el.textContent=txt.slice(0,i+1); click(); i++; setTimeout(tick,50); }
+  (function tick(){ if(i<txt.length){ el.textContent=txt.slice(0,i+1); click(); i++; setTimeout(tick,95); }
     else { el.classList.remove('caret'); done&&done(); } })(); }
-function typeMotto(){ const t=T[lang]; typeInto(m1el,t.m1,()=>setTimeout(()=>typeInto(m2el,t.m2),200)); }
+let mottoShown=false;
+function typeMotto(){ const t=T[lang];
+  if(mottoShown) soundOn=false;
+  mottoShown=true;
+  typeInto(m1el,t.m1,()=>setTimeout(()=>typeInto(m2el,t.m2,()=>{soundOn=false;}),260));
+}
 let started=false; const kick=()=>{ if(!started){started=true; typeMotto();} };
 window.addEventListener('click',kick,{once:true}); window.addEventListener('keydown',kick,{once:true});
 setTimeout(()=>{ if(!started){started=true; typeMotto();} },1200);
