@@ -53,7 +53,7 @@ input::placeholder { color:#555; }
 .note-more { background:none; border:none; color:#c9a96a; font-family:inherit; font-weight:300; font-size:11px; cursor:pointer; padding:6px 0 0 0; text-decoration:underline; }
 .copy-btn { background:#1e1e1e; border:1px solid #3a3a3a; color:#9a9a9a; font-family:inherit; font-weight:300; font-size:11px; padding:7px 12px; cursor:pointer; margin-top:16px; }
 .copy-btn:hover { color:#fff; border-color:#4a4a4a; }
-.new-search { background:none; border:none; color:#6a6a6a; font-family:inherit; font-weight:300; font-size:11px; cursor:pointer; padding:0 0 6px 0; float:right; text-decoration:underline; }
+.new-search { background:none; border:none; color:#6a6a6a; font-family:inherit; font-weight:300; font-size:11px; cursor:pointer; padding:4px 2px 8px 2px; float:right; text-decoration:underline; position:relative; z-index:5; }
 .new-search:hover { color:#fff; }
 .vers { border:1px solid #3a2f1e; background:#141008; padding:14px 15px; margin-bottom:18px; }
 .v-title { color:#c9a96a; font-size:11px; letter-spacing:1px; margin-bottom:10px; }
@@ -290,8 +290,8 @@ $('fileInput').addEventListener('change',()=>{
 $('clearPhoto').addEventListener('click',()=>{ photoData=null; photoMime=null;
   $('fileInput').value=''; $('thumb').style.display='none'; $('clearPhoto').style.display='none'; });
     function resetPhoto(){ photoData=null; photoMime=null; $('fileInput').value='';
-  $('thumb').removeAttribute('src'); $('thumb').style.display='none';
-  $('clearPhoto').style.display='none'; }
+    $('thumb').removeAttribute('src'); $('thumb').style.display='none';
+    $('clearPhoto').style.display='none'; }
      $('newSearch').addEventListener('click',()=>{
         const b=$('newSearch');
         b.style.color='#fff';
