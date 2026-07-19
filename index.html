@@ -53,6 +53,8 @@ input::placeholder { color:#555; }
 .note-more { background:none; border:none; color:#c9a96a; font-family:inherit; font-weight:300; font-size:11px; cursor:pointer; padding:6px 0 0 0; text-decoration:underline; }
 .copy-btn { background:#1e1e1e; border:1px solid #3a3a3a; color:#9a9a9a; font-family:inherit; font-weight:300; font-size:11px; padding:7px 12px; cursor:pointer; margin-top:16px; }
 .copy-btn:hover { color:#fff; border-color:#4a4a4a; }
+.new-search { background:none; border:1px solid #3a3a3a; color:#9a9a9a; font-family:inherit; font-weight:300; font-size:12px; padding:9px 14px; cursor:pointer; margin-top:10px; width:100%; }
+.new-search:hover { color:#fff; border-color:#4a4a4a; }
 .vers { border:1px solid #3a2f1e; background:#141008; padding:14px 15px; margin-bottom:18px; }
 .v-title { color:#c9a96a; font-size:11px; letter-spacing:1px; margin-bottom:10px; }
 .v-item { display:flex; justify-content:space-between; align-items:baseline; gap:12px; padding:8px 0; border-bottom:1px solid #241d10; }
@@ -117,6 +119,7 @@ input::placeholder { color:#555; }
   </div>
   <input type="file" id="fileInput" accept="image/*" style="display:none" />
   <button class="btn" id="go"></button>
+  <button class="new-search" id="newSearch" style="display:none"></button>
 
   <div class="result" id="result"></div>
 </div>
@@ -135,6 +138,7 @@ const T = {
         photo:'📷 photo of the label', reading:'reading the label',
         more:'show more', less:'show less', copy:'copy result', copied:'copied ✓',
         refresh:'↻ refresh data', cachedNote:'saved result',
+        newSearch:'✕ new search',
         limit:'Daily limit reached for this browser. Please come back tomorrow, or search a wine you looked up before.',
         empty:'Type a wine name first.', fail:'Lookup failed. Please try again in a moment.' },
   ru: { m1:'Et tu, Brut?', m2:'Найди сахар в своём вине (г/л) с источником',
@@ -148,6 +152,7 @@ const T = {
         photo:'📷 фото этикетки', reading:'читаю этикетку',
         more:'подробнее', less:'свернуть', copy:'копировать результат', copied:'скопировано ✓',
         refresh:'↻ обновить данные', cachedNote:'сохранённый результат',
+        newSearch:'✕ новый поиск',
         limit:'Дневной лимит для этого браузера исчерпан. Зайдите завтра или поищите вино, которое уже смотрели.',
         empty:'Сначала введите название вина.', fail:'Поиск не удался. Попробуйте ещё раз через минуту.' },
   de: { m1:'Et tu, Brut?', m2:'Finde den Zucker in deinem Wein (g/L) mit Quelle',
@@ -161,6 +166,7 @@ const T = {
         photo:'📷 Foto des Etiketts', reading:'lese das Etikett',
         more:'mehr anzeigen', less:'weniger', copy:'Ergebnis kopieren', copied:'kopiert ✓',
         refresh:'↻ Daten aktualisieren', cachedNote:'gespeichertes Ergebnis',
+        newSearch:'✕ neue Suche',
         limit:'Tageslimit für diesen Browser erreicht. Bitte morgen wiederkommen oder einen bereits gesuchten Wein abrufen.',
         empty:'Bitte zuerst einen Weinnamen eingeben.', fail:'Suche fehlgeschlagen. Bitte gleich noch einmal versuchen.' }
 };
@@ -283,6 +289,14 @@ $('fileInput').addEventListener('change',()=>{
 });
 $('clearPhoto').addEventListener('click',()=>{ photoData=null; photoMime=null;
   $('fileInput').value=''; $('thumb').style.display='none'; $('clearPhoto').style.display='none'; });
+    function clearPhoto(){ photoData=null; photoMime=null; $('fileInput').value='';
+  $('thumb').removeAttribute('src'); $('thumb').style.display='none';
+  $('clearPhoto').style.display='none'; }
+     $('newSearch').addEventListener('click',()=>{
+       clearPhoto(); wineInput.value=''; sugBox.style.display='none';
+       result.classList.remove('show'); result.innerHTML='';
+       $('newSearch').style.display='none'; wineInput.focus();
+     });
      $('go').addEventListener('click',()=>run(false));
 wineInput.addEventListener('keydown',e=>{ if(e.key==='Enter') run(false); });
 
@@ -338,6 +352,7 @@ function render(raw, wasCached){
     h+='</div></div>';
   }
 
+  $('newSearch').style.display='block';
   h+='<button class="copy-btn" id="copyBtn">'+t.copy+'</button>';
   if(wasCached) h+=' <button class="copy-btn" id="refreshBtn">'+t.refresh+'</button>';
   result.innerHTML=h;
@@ -357,7 +372,9 @@ function render(raw, wasCached){
   const tg=$('tg'); if(tg) tg.addEventListener('click',()=>{ tg.classList.toggle('open'); $('bt').classList.toggle('open'); });
 }
 
-const _al=applyLang; applyLang=function(){ _al(); $('photoBtn').textContent=T[lang].photo; };
+const _al=applyLang; applyLang=function(){ _al();
+  $('photoBtn').textContent=T[lang].photo;
+  $('newSearch').textContent=T[lang].newSearch; };
 applyLang();
 </script>
 </body>
