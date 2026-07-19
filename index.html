@@ -251,12 +251,12 @@ function overLimit(){
 
 // ---------- поиск ----------
 const result=$('result');
-function loading(){ result.classList.add('show'); result.innerHTML='<div class="spinner">'+T[lang].loading+'<span class="dots"></span></div>'; }
+function loading(){ result.style.display=''; result.classList.add('show'); result.innerHTML='<div class="spinner">'+T[lang].loading+'<span class="dots"></span></div>'; }
 
 async function run(forceRefresh){
   const wine=wineInput.value.trim();
-  if(!wine && !photoData){ result.classList.add('show'); result.innerHTML='<div class="err">'+T[lang].empty+'</div>'; return; }
-  if(overLimit()){ result.classList.add('show'); result.innerHTML='<div class="err">'+T[lang].limit+'</div>'; return; }
+  if(!wine && !photoData){ result.style.display=''; result.classList.add('show'); result.innerHTML='<div class="err">'+T[lang].empty+'</div>'; return; }
+  if(overLimit()){ result.style.display=''; result.classList.add('show'); result.innerHTML='<div class="err">'+T[lang].limit+'</div>'; return; }
   sugBox.style.display='none'; loading();
   try{
     const r=await fetch('/api/lookup',{ method:'POST', headers:{'Content-Type':'application/json'},
@@ -289,14 +289,16 @@ $('fileInput').addEventListener('change',()=>{
 });
 $('clearPhoto').addEventListener('click',()=>{ photoData=null; photoMime=null;
   $('fileInput').value=''; $('thumb').style.display='none'; $('clearPhoto').style.display='none'; });
-    function clearPhoto(){ photoData=null; photoMime=null; $('fileInput').value='';
+    function resetPhoto(){ photoData=null; photoMime=null; $('fileInput').value='';
   $('thumb').removeAttribute('src'); $('thumb').style.display='none';
   $('clearPhoto').style.display='none'; }
      $('newSearch').addEventListener('click',()=>{
-       clearPhoto(); wineInput.value=''; sugBox.style.display='none';
-       result.classList.remove('show'); result.innerHTML='';
-       $('newSearch').style.display='none'; wineInput.focus();
-     });
+        const b=$('newSearch');
+        b.style.color='#fff';
+        resetPhoto(); wineInput.value=''; sugBox.style.display='none';
+        result.classList.remove('show'); result.style.display='none'; result.innerHTML='';
+        setTimeout(()=>{ b.style.display='none'; b.style.color=''; wineInput.focus(); },140);
+      });
      $('go').addEventListener('click',()=>run(false));
 wineInput.addEventListener('keydown',e=>{ if(e.key==='Enter') run(false); });
 
